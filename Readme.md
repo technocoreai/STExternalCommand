@@ -16,7 +16,7 @@ Commands
 Filter Through Command
 ----------------------
 
-If there is at least one non-empty selection, it will pipe each selection through an external command and replace with the output. Otherwise, whole buffer is replaced.
+Pipes each non-empty selection through an external command and replaces contents of the selection with its output. If there are no non-empty selections, replaces the whole buffer.
 
 To use, press *Edit* / *Filter Through Command* or bind it to a hotkey:
 
