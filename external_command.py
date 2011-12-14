@@ -1,10 +1,11 @@
-import sublime, sublime_plugin, subprocess, thread, traceback, re
+import sublime, sublime_plugin, subprocess, thread, re
 
 class CancelledException(Exception):
     pass
 
 class ProcessFailedException(Exception):
     def __init__(self, stderr, exit_status):
+        super(ProcessFailedException, self).__init__()
         self.stderr = stderr
         self.exit_status = exit_status
 
@@ -62,8 +63,14 @@ class ExternalCommandTask(object):
             panel.insert(edit, panel.size(), result.error_message())
 
         panel.set_read_only(True)
-        self.view.window().run_command("show_panel", { "panel": "output.external_command_errors" })
+        self.view.window().run_command("show_panel", {"panel": "output.external_command_errors"})
         panel.end_edit(edit)
+
+    def handle_results(self, results, edit):
+        raise NotImplementedError()
+
+    def task_input(self):
+        raise NotImplementedError()
 
     def start(self):
         input_strings = self.task_input()
@@ -71,7 +78,7 @@ class ExternalCommandTask(object):
         def run():
             try:
                 filter_results = [self.run_filter(string) for string in input_strings]
-                def done():
+                def process_results():
                     if not self.cancelled:
                         edit = self.view.begin_edit(self.sublime_cmd_name, None)
                         self.handle_results(filter_results, edit)
@@ -82,14 +89,14 @@ class ExternalCommandTask(object):
                         if len(failed_results) > 0:
                             self.show_error_panel(failed_results)
 
-                sublime.set_timeout(done, 0)
+                sublime.set_timeout(process_results, 0)
             finally:
                 def done():
                     self.done = True
                     self.on_done(self)
                 sublime.set_timeout(done, 0)
 
-        def spin(size, i = 0, addend = 1):
+        def spin(size, i=0, addend=1):
             if self.done:
                 self.view.erase_status('external_command')
                 return
@@ -116,6 +123,7 @@ class ExternalCommandTask(object):
             except OSError:
                 pass
 
+
 class ReplaceTask(ExternalCommandTask):
     def __init__(self, *args, **kwargs):
         super(ReplaceTask, self).__init__(*args, **kwargs)
@@ -133,10 +141,10 @@ class ReplaceTask(ExternalCommandTask):
         delta = 0
         for region, result in zip(self.regions, results):
             replacement_text = result.output()
-            current_size = region.size()
             new_region = sublime.Region(region.begin() + delta, region.end() + delta)
             self.view.erase(edit, new_region)
             delta += self.view.insert(edit, new_region.begin(), replacement_text) - new_region.size()
+
 
 class InsertTask(ExternalCommandTask):
     def __init__(self, *args, **kwargs):
@@ -144,7 +152,7 @@ class InsertTask(ExternalCommandTask):
 
     def task_input(self):
         self.regions = self.view.sel()
-        return ["" for region in self.regions]
+        return ["" for _ in self.regions]
 
     def handle_results(self, results, edit):
         delta = 0
@@ -152,6 +160,7 @@ class InsertTask(ExternalCommandTask):
             replacement_text = result.output()
             new_region = sublime.Region(region.begin() + delta, region.end() + delta)
             delta += self.view.insert(edit, new_region.begin(), replacement_text)
+
 
 class ExternalCommandManager(sublime_plugin.EventListener):
     tasks = {}
@@ -182,6 +191,7 @@ class ExternalCommandManager(sublime_plugin.EventListener):
         self.tasks[view.buffer_id()] = task
         task.start()
 
+
 class ExternalCommandBase(object):
     command_manager = ExternalCommandManager()
 
@@ -202,7 +212,7 @@ class ExternalCommandBase(object):
         else:
             return super(ExternalCommandBase, self).description()
 
-    def run(self, edit):
+    def run(self, _):
         task = self.get_task()
         if task and type(task) == self.task_type:
             task.cancel()
@@ -211,8 +221,10 @@ class ExternalCommandBase(object):
                 self.command_manager.start_task(self.view, self, cmdline)
             self.view.window().show_input_panel("Command:", "", start, None, None)
 
+
 class FilterThroughCommandCommand(ExternalCommandBase, sublime_plugin.TextCommand):
     task_type = ReplaceTask
+
 
 class InsertCommandOutputCommand(ExternalCommandBase, sublime_plugin.TextCommand):
     task_type = InsertTask
