@@ -191,6 +191,10 @@ class ExternalCommandManager(sublime_plugin.EventListener):
         self.tasks[view.buffer_id()] = task
         task.start()
 
+    def __del__(self):
+        for task in self.tasks.values():
+            task.cancel()
+
 
 class ExternalCommandBase(object):
     command_manager = ExternalCommandManager()
