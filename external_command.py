@@ -183,7 +183,8 @@ class ExternalCommandManager(sublime_plugin.EventListener):
     def task_for_view(self, view):
         return self.tasks.get(view.buffer_id())
 
-    def start_task(self, view, sublime_command, cmdline):
+    def start_task(self, sublime_command, cmdline):
+        view = sublime_command.view
         def on_done(task):
             if self.tasks.get(view.buffer_id()) == task:
                 del self.tasks[view.buffer_id()]
@@ -222,7 +223,7 @@ class ExternalCommandBase(object):
             task.cancel()
         else:
             def start(cmdline):
-                self.command_manager.start_task(self.view, self, cmdline)
+                self.command_manager.start_task(self, cmdline)
             self.view.window().show_input_panel("Command:", "", start, None, None)
 
 
