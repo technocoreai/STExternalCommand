@@ -38,6 +38,11 @@ Notes
 
 External command will be executed asynchronously, so you can cancel it by pressing the same hotkey or using *Edit* / *Cancel External Command*. It will also be automatically cancelled if you try to modify buffer contents, selections, or close the buffer.
 
+Both commands accept an optional *cmdline* argument, so you can use them to quickly bind specific external commands. For example,
+add this to your bindings to quickly add line numbers to selected text:
+
+    { "keys": ["…"], "command": "filter_through_command", "args": { "cmdline": "cat -n" } }
+
 License
 =======
 

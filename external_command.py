@@ -217,15 +217,19 @@ class ExternalCommandBase(object):
         else:
             return super(ExternalCommandBase, self).description()
 
-    def run(self, _):
+    def run(self, edit, cmdline=None):
         task = self.get_task()
         if task and type(task) == self.task_type:
             task.cancel()
         else:
             def start(cmdline):
-                self.command_manager.start_task(self, cmdline)
-            self.view.window().show_input_panel("Command:", "", start, None, None)
+                if cmdline:
+                    self.command_manager.start_task(self, cmdline)
 
+            if cmdline is not None:
+                start(cmdline)
+            else:
+                self.view.window().show_input_panel("Command:", "", start, None, None)
 
 class FilterThroughCommandCommand(ExternalCommandBase, sublime_plugin.TextCommand):
     task_type = ReplaceTask
