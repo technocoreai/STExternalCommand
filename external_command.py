@@ -1,4 +1,4 @@
-import sublime, sublime_plugin, subprocess, thread, re
+import sublime, sublime_plugin, subprocess, thread, re, os
 
 class CancelledException(Exception):
     pass
@@ -41,12 +41,17 @@ class ExternalCommandTask(object):
         if self.cancelled:
             raise CancelledException()
 
+        env = dict(os.environ)
+        if not ('LC_CTYPE' in env or 'LC_ALL' in env or 'LANG' in env):
+            env['LC_CTYPE'] = 'en_US.UTF-8'
+
         self.proc = subprocess.Popen(
             self.cmdline,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            shell=True)
+            shell=True,
+            env=env)
 
         stdout, stderr = self.proc.communicate(region_text)
         returncode = self.proc.returncode
