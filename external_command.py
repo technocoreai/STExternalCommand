@@ -1,4 +1,4 @@
-import sublime, sublime_plugin, subprocess, thread, re, os
+import sublime, sublime_plugin, subprocess, _thread, re, os
 
 class CancelledException(Exception):
     pass
@@ -116,7 +116,7 @@ class ExternalCommandTask(object):
             i += addend
             sublime.set_timeout(lambda: spin(size, i, addend), 100)
 
-        thread.start_new_thread(run, ())
+        _thread.start_new_thread(run, ())
         spin(8)
 
     def cancel(self):
