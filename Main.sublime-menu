@@ -1,14 +1,18 @@
 [
-    {
-        "id": "edit",
-        "children":
-        [
-            {
-                "command": "filter_through_command"
-            },
-            {
-                "command": "insert_command_output"
-            }
-        ]
-    }
+  {
+    "id": "selection",
+    "children":
+    [
+      {
+        "caption": "-",
+        "id": "external-command"
+      },
+      {
+        "command": "filter_through_command"
+      },
+      {
+        "command": "insert_command_output"
+      }
+    ]
+  }
 ]

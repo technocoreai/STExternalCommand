@@ -1,0 +1,10 @@
+[
+  {
+    "caption": "Filter Through Command",
+    "command": "filter_through_command"
+  },
+  {
+    "caption": "Insert Command Output",
+    "command": "insert_command_output"
+  }
+]
