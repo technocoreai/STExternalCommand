@@ -1,0 +1,21 @@
+[
+    // For history navigation.
+    {
+        "keys": ["up"], "command": "sublime_external_command_history",
+        "args": {
+            "backwards": true
+        },
+        "context":
+        [
+            { "key": "selector", "operator": "equal", "operand": "text.external_command" }
+        ]
+    },
+    {
+        "keys": ["down"], "command": "sublime_external_command_history",
+        "context":
+        [
+            { "key": "selector", "operator": "equal", "operand": "text.external_command" }
+        ]
+
+    }
+]
