@@ -293,6 +293,7 @@ class ExternalCommandBase(sublime_plugin.TextCommand):
                 start(cmdline)
             else:
                 panel = self.view.window().show_input_panel('Command:', history.getLast(), start, None, None)
+                # This sets a scope to the input panel, which enables the history navigation commands.
                 panel.set_syntax_file('Packages/SublimeExternalCommand/external_command.hidden-tmLanguage')
                 panel.settings().set('is_widget', True)
                 panel.settings().set('gutter', False)
