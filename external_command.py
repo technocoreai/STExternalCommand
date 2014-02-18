@@ -41,14 +41,6 @@ class History:
         commands.insert(0, command)
         self.write(commands)
 
-    def getLast(self):
-        '''Return the most recent command.'''
-        commands = self.read()
-        if len(commands) > 0:
-            return commands[0]
-        else:
-            return ''
-
 history = History(HISTORY_SIZE, HISTORY_FILENAME)
 
 class SublimeExternalCommandHistory(sublime_plugin.TextCommand):
@@ -62,11 +54,14 @@ class SublimeExternalCommandHistory(sublime_plugin.TextCommand):
         if backwards:
             SublimeExternalCommandHistory.index = min(SublimeExternalCommandHistory.index + 1, history.size() - 1)
         else:
-            SublimeExternalCommandHistory.index = max(SublimeExternalCommandHistory.index - 1, 0)
+            SublimeExternalCommandHistory.index = max(SublimeExternalCommandHistory.index - 1, -1)
 
-        self.view.erase(edit, sublime.Region(0, self.view.size()))
-        self.view.insert(edit, 0, history.read()[SublimeExternalCommandHistory.index])
-
+        view = self.view
+        view.erase(edit, sublime.Region(0, view.size()))
+        # index == -1 means "current".  Just clear the input box.
+        if SublimeExternalCommandHistory.index >= 0:
+            command = history.read()[SublimeExternalCommandHistory.index]
+            view.insert(edit, 0, command)
 
 class CancelledException(Exception):
     pass
@@ -292,7 +287,8 @@ class ExternalCommandBase(sublime_plugin.TextCommand):
             if cmdline is not None:
                 start(cmdline)
             else:
-                panel = self.view.window().show_input_panel('Command:', history.getLast(), start, None, None)
+                SublimeExternalCommandHistory.index = -1
+                panel = self.view.window().show_input_panel('Command:', "", start, None, None)
                 # This sets a scope to the input panel, which enables the history navigation commands.
                 panel.set_syntax_file('Packages/SublimeExternalCommand/external_command.hidden-tmLanguage')
                 panel.settings().set('is_widget', True)
