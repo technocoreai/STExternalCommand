@@ -1,67 +1,4 @@
-import sublime, sublime_plugin, subprocess, _thread, re, os, io
-
-HISTORY_SIZE = 16
-HISTORY_FILENAME = '~/.sublimeexternalcommand_history'
-
-class History:
-    '''
-    Command history management.
-    '''
-    def __init__(self, max_size, filename):
-        self.max_size = max_size
-        self.filename = os.path.expanduser(filename)
-
-    def read(self):
-        '''Read all commands from the history file and return as a list.'''
-        commands = []
-        if os.path.isfile(self.filename):
-            f = io.open(self.filename, 'r', encoding='utf-8')
-            commands = list(map(lambda s: s.strip(), f.readlines()))
-            f.close()
-        return commands
-
-    def size(self):
-        '''Return the number of commands in the history file.'''
-        return len(self.read())
-
-    def write(self, commands):
-        '''Write commands to the history file.'''
-        if len(commands) > self.max_size:
-            commands = commands[0:self.max_size]
-
-        f = io.open(self.filename, 'w', encoding='utf-8')
-        f.write('\n'.join(commands))
-        f.close()
-
-    def add(self, command):
-        '''Add a command to the history file.'''
-        command = command.strip()
-        # If the same command is in the history, remove it first.
-        commands = list(filter(lambda s: s != command, self.read()))
-        commands.insert(0, command)
-        self.write(commands)
-
-history = History(HISTORY_SIZE, HISTORY_FILENAME)
-
-class SublimeExternalCommandHistory(sublime_plugin.TextCommand):
-    '''
-    Handles the UP/DOWN keys in the command input box.
-    '''
-    index = 0
-
-    def run(self, edit, backwards=False):
-        # sublime.status_message('History %d -> %s [%d]' % (SublimeExternalCommandHistory.index, backwards, history.size()))
-        if backwards:
-            SublimeExternalCommandHistory.index = min(SublimeExternalCommandHistory.index + 1, history.size() - 1)
-        else:
-            SublimeExternalCommandHistory.index = max(SublimeExternalCommandHistory.index - 1, -1)
-
-        view = self.view
-        view.erase(edit, sublime.Region(0, view.size()))
-        # index == -1 means "current".  Just clear the input box.
-        if SublimeExternalCommandHistory.index >= 0:
-            command = history.read()[SublimeExternalCommandHistory.index]
-            view.insert(edit, 0, command)
+import sublime, sublime_plugin, subprocess, _thread, re, os
 
 class CancelledException(Exception):
     pass
@@ -281,19 +218,12 @@ class ExternalCommandBase(sublime_plugin.TextCommand):
         else:
             def start(cmdline):
                 if cmdline:
-                    history.add(cmdline)
                     self.command_manager.start_task(self, cmdline, **kwargs)
 
             if cmdline is not None:
                 start(cmdline)
             else:
-                SublimeExternalCommandHistory.index = -1
                 panel = self.view.window().show_input_panel('Command:', "", start, None, None)
-                # This sets a scope to the input panel, which enables the history navigation commands.
-                panel.set_syntax_file('Packages/External Command/external_command.hidden-tmLanguage')
-                panel.settings().set('is_widget', True)
-                panel.settings().set('gutter', False)
-                panel.settings().set('rulers', [])
 
 class FilterThroughCommandCommand(ExternalCommandBase):
     task_class = ReplaceTask
