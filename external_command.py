@@ -41,13 +41,12 @@ class ExternalCommandTask:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
-            universal_newlines=True,
             env=env)
 
-        stdout, stderr = self.proc.communicate(region_text)
+        stdout, stderr = self.proc.communicate(region_text.encode("utf-8"))
         returncode = self.proc.returncode
 
-        return CommandResult(stdout, stderr, returncode)
+        return CommandResult(stdout.decode("utf-8"), stderr.decode("utf-8"), returncode)
 
     def show_error_panel(self, failed_results):
         panel = self.view.window().create_output_panel('external_command_errors')
